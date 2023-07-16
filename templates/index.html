@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>CVbot</title>
 	<script src="/static/joy.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.1/socket.io.js"></script>
 	<style>
 	html{
 		width: 100%;
@@ -26,7 +27,7 @@
 		height: 100vh;
 		display: block;
 		margin: auto;
-  }
+	}
 	
 	#joyDiv {
 		width: max(33vw, 33vh);
@@ -59,6 +60,25 @@
 		
 		setInterval(function(){control(joy.GetX(), joy.GetY());}, 50);
 		
+		var socket = io();
+		navigator.mediaDevices.getUserMedia({ audio: true })
+			.then(function(stream) {
+				var audioContext = new AudioContext();
+				var mediaStreamSource = audioContext.createMediaStreamSource(stream);
+				var audioProcessor = audioContext.createScriptProcessor(2048, 1, 1);
+
+				audioProcessor.onaudioprocess = function(e) {
+					var audioData = e.inputBuffer.getChannelData(0);
+					socket.emit('audio', { audio: audioData });
+				};
+
+				mediaStreamSource.connect(audioProcessor);
+				audioProcessor.connect(audioContext.destination);
+			})
+			.catch(function(err) {
+				console.log('The following error occurred: ' + err);
+			});
+		
 	</script>
 </body>
-  </html>
+</html>
